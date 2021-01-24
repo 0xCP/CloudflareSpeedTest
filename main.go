@@ -23,12 +23,12 @@ func init() {
 	var printVersion bool
 	var help = `
 CloudflareSpeedTest ` + version + `
-测试 Cloudflare CDN 所有 IP 的延迟和速度，获取最快 IP！
+测试 Cloudflare CDN 所有 IP 的延迟和速度，获取最快 IP (IPv4+IPv6)！
 https://github.com/XIU2/CloudflareSpeedTest
 
 参数：
     -n 500
-        测速线程数量；线程数量越多延迟测速越快，请勿超过 1000 (误差大)；(默认 500)
+        测速线程数量；越多测速越快，性能弱的设备 (如路由器) 请适当调低；(默认 500 最多 1000)
     -t 4
         延迟测速次数；单个 IP 延迟测速次数，为 1 时将过滤丢包的IP，TCP协议；(默认 4)
     -tp 443
@@ -50,7 +50,7 @@ https://github.com/XIU2/CloudflareSpeedTest
     -o result.csv
         输出结果文件；如路径含有空格请加上引号；值为空格时不输出 [-o " "]；(默认 result.csv)
     -dd
-        禁用下载测速；禁用后测速结果会按延迟排序（默认按下载速度排序）；(默认 启用)
+        禁用下载测速；禁用后测速结果会按延迟排序 (默认按下载速度排序)；(默认 启用)
     -ipv6
         IPv6测速模式；确保 IP 段数据文件内只包含 IPv6 IP段，软件不支持同时测速 IPv4+IPv6；(默认 IPv4)
     -allip
@@ -165,19 +165,19 @@ func main() {
 			}
 			var downloadTestCount_2 int // 临时的下载测速次数
 			if timeLimit == 9999 && speedLimit == 0 {
-				downloadTestCount_2 = downloadTestCount // 如果没有指定条件，则临时的下载次数变量为下载测速次数
+				downloadTestCount_2 = downloadTestCount // 如果没有指定条件，则临时变量为下载测速次数
 				fmt.Println("开始下载测速：")
 			} else if timeLimit > 0 || speedLimit >= 0 {
-				downloadTestCount_2 = len(data) // 如果指定了任意一个条件，则临时的下载次数变量改为总数量
+				downloadTestCount_2 = len(data) // 如果指定了任意一个条件，则临时变量改为总数量
 				fmt.Println("开始下载测速（延迟时间上限：" + strconv.Itoa(timeLimit) + " ms，下载速度下限：" + strconv.Itoa(speedLimit) + " MB/s）：")
 			}
-			bar = pb.Simple.Start(downloadTestCount_2)
+			bar = pb.Simple.Start(downloadTestCount)
 			for i := 0; i < downloadTestCount_2; i++ {
 				_, speed := DownloadSpeedHandler(data[i].ip)
 				data[i].downloadSpeed = speed
-				bar.Add(1)
 				if int(data[i].pingTime) <= timeLimit && int(float64(speed)/1024/1024) >= speedLimit {
-					data_2 = append(data_2, data[i])      // 延迟和速度均满足条件时，添加到新数组中
+					data_2 = append(data_2, data[i]) // 延迟和速度均满足条件时，添加到新数组中
+					bar.Add(1)
 					if len(data_2) == downloadTestCount { // 满足条件的 IP =下载测速次数，则跳出循环
 						break
 					}
